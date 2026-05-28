@@ -1,250 +1,319 @@
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>나의 장단점 롤링페이퍼</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  .app { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem; font-family: var(--font-sans); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --border: #E8E6E0;
+    --border2: #D0CEC8;
+    --text: #1A1916;
+    --text2: #6B6860;
+    --text3: #A8A69F;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-dark: #3C3489;
+    --teal: #0F6E56;
+    --teal-light: #E1F5EE;
+    --teal-mid: #5DCAA5;
+    --coral: #993C1D;
+    --coral-light: #FAECE7;
+    --coral-mid: #F5C4B3;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --red-mid: #F09595;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .app { max-width: 600px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
   .screen { display: none; }
   .screen.active { display: block; }
-  h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
-  h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
-  h3 { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
-  p { font-size: 14px; color: var(--color-text-secondary); line-height: 1.6; }
-  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
-  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
-  .badge-lock { background: #EEEDFE; color: #3C3489; }
-  input, textarea { width: 100%; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; font-size: 14px; font-family: var(--font-sans); color: var(--color-text-primary); background: var(--color-background-primary); resize: none; }
-  input:focus, textarea:focus { outline: none; border-color: #7F77DD; box-shadow: 0 0 0 2px #EEEDFE; }
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); transition: background 0.15s; font-family: var(--font-sans); }
-  .btn:hover { background: var(--color-background-secondary); }
-  .btn-primary { background: #534AB7; color: #fff; border-color: #534AB7; }
-  .btn-primary:hover { background: #3C3489; border-color: #3C3489; }
-  .btn-danger-solid { background: #E24B4A; color: #fff; border-color: #E24B4A; }
-  .btn-danger-solid:hover { background: #A32D2D; border-color: #A32D2D; }
-  .btn-danger-outline { border-color: #F09595; color: #A32D2D; }
-  .btn-danger-outline:hover { background: #FCEBEB; }
-  .anon-notice { display: flex; align-items: flex-start; gap: 10px; background: #E1F5EE; border: 0.5px solid #5DCAA5; border-radius: var(--border-radius-md); padding: 12px 14px; margin-bottom: 1.25rem; }
-  .anon-notice i { color: #0F6E56; font-size: 18px; margin-top: 1px; flex-shrink: 0; }
-  .anon-notice p { color: #085041; font-size: 13px; margin: 0; line-height: 1.5; }
-  .section-divider { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
-  .strength-box { border: 0.5px solid #9FE1CB; border-radius: var(--border-radius-md); padding: 1rem; }
-  .weakness-box { border: 0.5px solid #F5C4B3; border-radius: var(--border-radius-md); padding: 1rem; }
-  .strength-box label { font-size: 13px; font-weight: 500; color: #0F6E56; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
-  .weakness-box label { font-size: 13px; font-weight: 500; color: #993C1D; display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
-  .profile-list { display: flex; flex-direction: column; gap: 8px; }
-  .profile-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); cursor: pointer; transition: background 0.15s; }
-  .profile-item:hover { background: var(--color-background-secondary); }
-  .profile-avatar { width: 36px; height: 36px; border-radius: 50%; background: #EEEDFE; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #534AB7; flex-shrink: 0; }
-  .feedback-item { padding: 10px 12px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-bottom: 6px; }
-  .feedback-item p { font-size: 14px; color: var(--color-text-primary); margin: 0; }
-  .feedback-item .meta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
-  .tab-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-  .tab-btn { padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); font-family: var(--font-sans); }
-  .tab-btn.active { background: #534AB7; color: #fff; border-color: #534AB7; }
+  h1 { font-size: 21px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  h2 { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  input, textarea {
+    width: 100%; border: 1px solid var(--border2); border-radius: var(--radius);
+    padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text);
+    background: var(--surface); resize: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px rgba(83,74,183,0.12); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+    border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border2); background: var(--surface); color: var(--text);
+    transition: all 0.15s; font-family: inherit;
+  }
+  .btn:hover { background: var(--bg); border-color: var(--border2); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn-primary:hover { background: var(--purple-dark); border-color: var(--purple-dark); }
+  .btn-danger { border-color: var(--red-mid); color: var(--red); }
+  .btn-danger:hover { background: var(--red-light); }
+  .btn-danger-solid { background: var(--red); color: #fff; border-color: var(--red); }
+  .btn-danger-solid:hover { background: #791F1F; }
+  .nav-back {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text2);
+    cursor: pointer; margin-bottom: 1.25rem; border: none; background: transparent; padding: 0; font-family: inherit;
+  }
+  .nav-back:hover { color: var(--text); }
+  .anon-notice {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--teal-light); border: 1px solid var(--teal-mid);
+    border-radius: var(--radius); padding: 12px 14px; margin-bottom: 1.25rem;
+  }
+  .anon-notice .icon { color: var(--teal); font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .anon-notice p { color: #085041; font-size: 13px; margin: 0; }
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .strength-box { border: 1px solid var(--teal-mid); border-radius: var(--radius); padding: 1rem; }
+  .weakness-box { border: 1px solid var(--coral-mid); border-radius: var(--radius); padding: 1rem; }
+  .strength-box .box-label { font-size: 13px; font-weight: 600; color: var(--teal); display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+  .weakness-box .box-label { font-size: 13px; font-weight: 600; color: var(--coral); display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+  .char-count { font-size: 11px; color: var(--text3); text-align: right; margin-top: 4px; }
+  .profile-item {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    cursor: pointer; transition: background 0.12s; margin-bottom: 8px;
+  }
+  .profile-item:hover { background: var(--bg); }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--purple-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--purple); flex-shrink: 0;
+  }
+  .profile-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .profile-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
   .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 8px 0 16px; }
-  .pin-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #534AB7; background: transparent; }
-  .pin-dot.filled { background: #534AB7; }
-  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 200px; margin: 0 auto; }
-  .pin-key { padding: 12px; text-align: center; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); cursor: pointer; font-size: 16px; font-weight: 500; color: var(--color-text-primary); transition: background 0.1s; font-family: var(--font-sans); }
-  .pin-key:hover { background: var(--color-background-secondary); }
-  .empty-state { text-align: center; padding: 2rem 1rem; color: var(--color-text-secondary); font-size: 14px; }
-  .empty-state i { font-size: 32px; color: var(--color-text-tertiary); display: block; margin-bottom: 8px; }
-  .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; margin-bottom: 1.25rem; border: none; background: transparent; padding: 0; font-family: var(--font-sans); }
-  .nav-back:hover { color: var(--color-text-primary); }
-  .char-count { font-size: 11px; color: var(--color-text-tertiary); text-align: right; margin-top: 4px; }
-  .error-msg { font-size: 12px; color: #A32D2D; margin-top: 6px; }
-  .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.25rem 0; }
-  .flex-between { display: flex; align-items: center; justify-content: space-between; }
-  .copy-link { font-size: 12px; color: #534AB7; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-  .copy-link:hover { text-decoration: underline; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2C2C2A; color: #F1EFE8; padding: 8px 18px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+  .pin-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--purple); background: transparent; transition: background 0.1s; }
+  .pin-dot.filled { background: var(--purple); }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 210px; margin: 0 auto; }
+  .pin-key {
+    padding: 12px; text-align: center; border-radius: var(--radius);
+    border: 1px solid var(--border2); background: var(--surface); cursor: pointer;
+    font-size: 17px; font-weight: 500; color: var(--text); transition: background 0.1s; font-family: inherit;
+  }
+  .pin-key:hover { background: var(--bg); }
+  .tab-row { display: flex; gap: 6px; margin-bottom: 1rem; }
+  .tab-btn {
+    padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--border2); background: transparent; color: var(--text2); font-family: inherit;
+    transition: all 0.12s;
+  }
+  .tab-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .feedback-item { padding: 11px 13px; background: var(--bg); border-radius: var(--radius); margin-bottom: 7px; }
+  .feedback-item p { font-size: 14px; color: var(--text); line-height: 1.55; margin: 0; }
+  .feedback-meta { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .empty-state { text-align: center; padding: 2.5rem 1rem; }
+  .empty-state .empty-icon { font-size: 30px; margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; color: var(--text3); }
+  .count-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .count-card { flex: 1; padding: 12px; border-radius: var(--radius); text-align: center; }
+  .count-card.s { background: var(--teal-light); }
+  .count-card.w { background: var(--coral-light); }
+  .count-num { font-size: 24px; font-weight: 600; }
+  .count-card.s .count-num { color: var(--teal); }
+  .count-card.w .count-num { color: var(--coral); }
+  .count-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .code-bar {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: var(--purple-light); border-radius: var(--radius); margin-bottom: 10px; cursor: pointer;
+  }
+  .code-bar:hover { opacity: 0.85; }
+  .code-bar span { font-size: 12px; color: var(--purple-dark); flex: 1; font-weight: 500; }
+  .copy-btn { font-size: 12px; color: var(--purple); font-weight: 500; white-space: nowrap; }
+  .delete-zone { border: 1px solid var(--red-mid); border-radius: var(--radius-lg); padding: 1.25rem; margin-top: 1.5rem; background: var(--red-light); }
+  .delete-zone h3 { font-size: 14px; font-weight: 600; color: #791F1F; margin-bottom: 4px; }
+  .delete-zone p { font-size: 13px; color: var(--red); margin-bottom: 12px; }
+  .modal-wrap { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-wrap.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.5rem; width: 100%; max-width: 340px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+  .error-msg { font-size: 12px; color: var(--red); margin-top: 6px; }
+  .loading { text-align: center; padding: 2rem; color: var(--text2); font-size: 14px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: -3px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .badge-lock { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--purple-light); color: var(--purple-dark); font-weight: 500; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1A1916; color: #F7F6F2; padding: 9px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .feedback-count-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-  .count-badge { flex: 1; padding: 10px; border-radius: var(--border-radius-md); text-align: center; }
-  .count-badge.strength { background: #E1F5EE; }
-  .count-badge.weakness { background: #FAECE7; }
-  .count-badge .num { font-size: 22px; font-weight: 500; }
-  .count-badge.strength .num { color: #0F6E56; }
-  .count-badge.weakness .num { color: #993C1D; }
-  .count-badge .lbl { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
-  .delete-zone { border: 0.5px solid #F09595; border-radius: var(--border-radius-lg); padding: 1.25rem; margin-top: 1.5rem; background: #FCEBEB; }
-  .delete-zone h3 { color: #791F1F; margin-bottom: 4px; font-size: 14px; }
-  .delete-zone p { font-size: 13px; color: #A32D2D; margin-bottom: 12px; }
-  .modal-backdrop { min-height: 320px; background: rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center; border-radius: var(--border-radius-lg); padding: 1rem; }
-  .modal-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1.5rem; width: 100%; max-width: 360px; }
+  @media (max-width: 480px) {
+    .section-grid { grid-template-columns: 1fr; }
+  }
 </style>
-
+</head>
+<body>
 <div class="app">
   <div class="toast" id="toast"></div>
 
-  <!-- SCREEN 1: 홈 -->
-  <div class="screen active" id="screen-home">
-    <div style="margin-bottom: 1.5rem;">
-      <h1 style="margin-bottom: 4px;">나의 장단점 롤링페이퍼</h1>
-      <p>팀원들에게 익명 피드백을 받고, PM 면접을 준비해보세요.</p>
-    </div>
-    <div style="display: flex; gap: 8px; margin-bottom: 1.5rem;">
-      <button class="btn btn-primary" onclick="goTo('screen-create')"><i class="ti ti-plus" aria-hidden="true"></i> 내 페이지 만들기</button>
-      <button class="btn" onclick="goTo('screen-find')"><i class="ti ti-search" aria-hidden="true"></i> 친구 페이지 찾기</button>
-    </div>
-    <div>
-      <h3 style="margin-bottom:10px;">내가 만든 페이지</h3>
-      <div id="my-pages-list" class="profile-list"></div>
+  <!-- 삭제 확인 모달 -->
+  <div class="modal-wrap" id="delete-modal">
+    <div class="modal">
+      <div style="text-align:center; margin-bottom:1.25rem;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--red-light);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          🗑️
+        </div>
+        <h2 style="margin-bottom:6px;">정말 삭제할까요?</h2>
+        <p style="font-size:13px;">페이지와 피드백 <strong id="del-count">0</strong>개가 모두 삭제됩니다.<br>되돌릴 수 없어요.</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" style="flex:1;" onclick="closeDeleteModal()">취소</button>
+        <button class="btn btn-danger-solid" style="flex:1;" onclick="deletePage()" id="del-confirm-btn">삭제하기</button>
+      </div>
     </div>
   </div>
 
-  <!-- SCREEN 2: 페이지 만들기 -->
+  <!-- SCREEN: 홈 -->
+  <div class="screen active" id="screen-home">
+    <div style="margin-bottom:1.5rem;">
+      <h1 style="margin-bottom:4px;">나의 장단점 롤링페이퍼</h1>
+      <p>팀원들에게 익명 피드백을 받고 PM 면접을 준비해보세요.</p>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:1.5rem;">
+      <button class="btn btn-primary" onclick="goTo('screen-create')">＋ 내 페이지 만들기</button>
+      <button class="btn" onclick="goTo('screen-find')">🔍 친구 페이지 찾기</button>
+    </div>
+    <h2 style="margin-bottom:10px;font-size:15px;">내가 만든 페이지</h2>
+    <div id="home-my-pages"></div>
+  </div>
+
+  <!-- SCREEN: 페이지 만들기 -->
   <div class="screen" id="screen-create">
-    <button class="nav-back" onclick="goTo('screen-home')"><i class="ti ti-arrow-left"></i> 돌아가기</button>
-    <h2 style="margin-bottom: 4px;">내 페이지 만들기</h2>
-    <p style="margin-bottom: 1.25rem;">팀원들이 피드백을 남길 수 있는 나만의 페이지를 생성해요.</p>
+    <button class="nav-back" onclick="goTo('screen-home')">← 돌아가기</button>
+    <h2 style="margin-bottom:4px;">내 페이지 만들기</h2>
+    <p style="margin-bottom:1.25rem;">팀원들이 피드백을 남길 수 있는 나만의 페이지를 생성해요.</p>
     <div class="card">
-      <div style="margin-bottom: 14px;">
-        <label style="font-size: 13px; font-weight: 500; color: var(--color-text-secondary); display: block; margin-bottom: 6px;">이름 또는 닉네임</label>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px;">이름 또는 닉네임</label>
         <input type="text" id="create-name" placeholder="예: 김민준" maxlength="10" />
       </div>
-      <div style="margin-bottom: 14px;">
-        <label style="font-size: 13px; font-weight: 500; color: var(--color-text-secondary); display: block; margin-bottom: 6px;">직무 / 역할 <span style="font-weight:400; color: var(--color-text-tertiary);">(선택)</span></label>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px;">직무 / 역할 <span style="font-weight:400;color:var(--text3);">(선택)</span></label>
         <input type="text" id="create-role" placeholder="예: PM 지원자, 마케터, 기획자" maxlength="20" />
       </div>
       <hr class="divider" />
-      <div>
-        <label style="font-size: 13px; font-weight: 500; color: var(--color-text-secondary); display: block; margin-bottom: 6px;"><i class="ti ti-lock" aria-hidden="true" style="font-size:14px; vertical-align:-1px;"></i> 4자리 PIN 설정 <span style="font-weight:400; color:var(--color-text-tertiary);">(열람 및 삭제 시 사용)</span></label>
-        <div class="pin-dots" id="create-pin-dots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
-        <div class="pin-keypad" id="create-keypad"></div>
-        <div class="error-msg" id="create-error" style="text-align:center;"></div>
+      <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px;">🔒 4자리 PIN 설정 <span style="font-weight:400;color:var(--text3);">(열람·삭제 시 사용)</span></label>
+      <div class="pin-dots" id="create-pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
       </div>
+      <div class="pin-keypad" id="create-keypad"></div>
+      <div class="error-msg" id="create-error" style="text-align:center;"></div>
     </div>
-    <button class="btn btn-primary" style="width:100%;" onclick="createPage()"><i class="ti ti-check" aria-hidden="true"></i> 페이지 생성하기</button>
+    <button class="btn btn-primary" style="width:100%;" onclick="createPage()" id="create-btn">✓ 페이지 생성하기</button>
   </div>
 
-  <!-- SCREEN 3: 친구 페이지 찾기 -->
+  <!-- SCREEN: 친구 페이지 찾기 -->
   <div class="screen" id="screen-find">
-    <button class="nav-back" onclick="goTo('screen-home')"><i class="ti ti-arrow-left"></i> 돌아가기</button>
-    <h2 style="margin-bottom: 4px;">친구 페이지 찾기</h2>
-    <p style="margin-bottom: 1.25rem;">피드백을 남길 팀원의 이름이나 코드를 입력하세요.</p>
+    <button class="nav-back" onclick="goTo('screen-home')">← 돌아가기</button>
+    <h2 style="margin-bottom:4px;">친구 페이지 찾기</h2>
+    <p style="margin-bottom:1.25rem;">피드백을 남길 팀원의 이름이나 코드를 입력하세요.</p>
     <div class="card">
-      <input type="text" id="find-input" placeholder="이름 또는 페이지 코드 입력" style="margin-bottom: 10px;" />
-      <button class="btn btn-primary" style="width:100%;" onclick="findPage()"><i class="ti ti-search" aria-hidden="true"></i> 검색</button>
+      <input type="text" id="find-input" placeholder="이름 또는 6자리 코드 입력" style="margin-bottom:10px;" />
+      <button class="btn btn-primary" style="width:100%;" onclick="findPage()" id="find-btn">🔍 검색</button>
     </div>
     <div id="find-results"></div>
   </div>
 
-  <!-- SCREEN 4: 피드백 작성 (익명) -->
+  <!-- SCREEN: 피드백 작성 -->
   <div class="screen" id="screen-write">
-    <button class="nav-back" id="write-back"><i class="ti ti-arrow-left"></i> 돌아가기</button>
+    <button class="nav-back" onclick="goTo('screen-find')">← 돌아가기</button>
     <div class="anon-notice">
-      <i class="ti ti-shield-check" aria-hidden="true"></i>
+      <div class="icon">🛡️</div>
       <p><strong>완전 익명으로 진행됩니다.</strong><br>작성하신 내용은 당사자만 확인할 수 있으며, 누가 작성했는지 절대 알 수 없어요. 솔직하게 적어주실수록 도움이 됩니다.</p>
     </div>
-    <div class="card" style="margin-bottom: 1rem;">
-      <div id="write-profile-header" style="display:flex; align-items:center; gap:10px; margin-bottom: 12px;"></div>
-      <p id="write-guide" style="font-size:13px; color:var(--color-text-secondary);"></p>
+    <div class="card" style="margin-bottom:1rem;">
+      <div id="write-header" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"></div>
+      <p id="write-guide" style="font-size:13px;"></p>
     </div>
-    <div class="section-divider">
+    <div class="section-grid">
       <div class="strength-box">
-        <label><i class="ti ti-sun" aria-hidden="true"></i> 장점 / 강점</label>
-        <textarea id="write-strength" rows="5" placeholder="함께 일할 때 느꼈던 강점을 적어주세요." maxlength="300"></textarea>
-        <div class="char-count"><span id="s-count">0</span>/300</div>
+        <div class="box-label">☀️ 장점 / 강점</div>
+        <textarea id="write-strength" rows="5" placeholder="함께 일하며 느낀 강점을 적어주세요." maxlength="300"></textarea>
+        <div class="char-count"><span id="sc">0</span>/300</div>
       </div>
       <div class="weakness-box">
-        <label><i class="ti ti-adjustments" aria-hidden="true"></i> 단점 / 개선점</label>
+        <div class="box-label">🔧 단점 / 개선점</div>
         <textarea id="write-weakness" rows="5" placeholder="성장을 위한 솔직한 피드백을 적어주세요." maxlength="300"></textarea>
-        <div class="char-count"><span id="w-count">0</span>/300</div>
+        <div class="char-count"><span id="wc">0</span>/300</div>
       </div>
     </div>
-    <div class="error-msg" id="write-error" style="margin-bottom: 10px;"></div>
-    <button class="btn btn-primary" style="width:100%;" onclick="submitFeedback()"><i class="ti ti-send" aria-hidden="true"></i> 익명으로 피드백 제출하기</button>
+    <div class="error-msg" id="write-error" style="margin-bottom:10px;"></div>
+    <button class="btn btn-primary" style="width:100%;" onclick="submitFeedback()" id="submit-btn">📨 익명으로 피드백 제출하기</button>
   </div>
 
-  <!-- SCREEN 5: 제출 완료 -->
+  <!-- SCREEN: 제출 완료 -->
   <div class="screen" id="screen-done">
-    <div style="text-align: center; padding: 3rem 1rem;">
-      <div style="width:64px; height:64px; border-radius:50%; background:#E1F5EE; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
-        <i class="ti ti-check" style="font-size:28px; color:#0F6E56;" aria-hidden="true"></i>
-      </div>
+    <div style="text-align:center;padding:3rem 1rem;">
+      <div style="font-size:48px;margin-bottom:1rem;">✅</div>
       <h2 style="margin-bottom:8px;">피드백을 전달했어요!</h2>
-      <p style="margin-bottom: 1.5rem;">익명으로 안전하게 전달되었습니다.<br>솔직한 피드백이 큰 도움이 될 거예요.</p>
+      <p style="margin-bottom:1.5rem;">익명으로 안전하게 전달되었습니다.<br>솔직한 피드백이 큰 도움이 될 거예요.</p>
       <button class="btn btn-primary" onclick="goTo('screen-home')">홈으로 돌아가기</button>
     </div>
   </div>
 
-  <!-- SCREEN 6: PIN 입력 -->
+  <!-- SCREEN: PIN 입력 -->
   <div class="screen" id="screen-pin">
-    <button class="nav-back" id="pin-back"><i class="ti ti-arrow-left"></i> 돌아가기</button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <div style="width:48px; height:48px; border-radius:50%; background:#EEEDFE; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
-        <i class="ti ti-lock" style="font-size:22px; color:#534AB7;" aria-hidden="true"></i>
-      </div>
+    <button class="nav-back" onclick="goTo('screen-home')">← 돌아가기</button>
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="font-size:36px;margin-bottom:10px;">🔐</div>
       <h2 style="margin-bottom:4px;">PIN 입력</h2>
       <p id="pin-desc" style="font-size:13px;">본인만 확인할 수 있습니다.</p>
     </div>
-    <div class="pin-dots" id="view-pin-dots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+    <div class="pin-dots" id="view-pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
     <div class="pin-keypad" id="view-keypad"></div>
-    <div class="error-msg" id="pin-error" style="text-align:center; margin-top:10px;"></div>
+    <div class="error-msg" id="pin-error" style="text-align:center;margin-top:10px;"></div>
   </div>
 
-  <!-- SCREEN 7: 내 피드백 보기 -->
+  <!-- SCREEN: 내 피드백 보기 -->
   <div class="screen" id="screen-mypage">
-    <button class="nav-back" onclick="goTo('screen-home')"><i class="ti ti-arrow-left"></i> 홈으로</button>
+    <button class="nav-back" onclick="goTo('screen-home')">← 홈으로</button>
     <div id="mypage-header" style="margin-bottom:1rem;"></div>
-    <div class="feedback-count-row">
-      <div class="count-badge strength"><div class="num" id="cnt-strength">0</div><div class="lbl">장점 피드백</div></div>
-      <div class="count-badge weakness"><div class="num" id="cnt-weakness">0</div><div class="lbl">단점 피드백</div></div>
+    <div class="count-row">
+      <div class="count-card s"><div class="count-num" id="cnt-s">0</div><div class="count-lbl">장점 피드백</div></div>
+      <div class="count-card w"><div class="count-num" id="cnt-w">0</div><div class="count-lbl">단점 피드백</div></div>
     </div>
-    <div class="card" style="margin-bottom: 10px; padding: 10px 14px; display:flex; align-items:center; gap:8px;">
-      <i class="ti ti-link" style="color:#534AB7; font-size:16px;" aria-hidden="true"></i>
-      <span style="font-size:12px; color:var(--color-text-secondary); flex:1;" id="page-code-display"></span>
-      <span class="copy-link" onclick="copyPageLink()"><i class="ti ti-copy" aria-hidden="true"></i>링크 복사</span>
+    <div class="code-bar" onclick="copyCode()">
+      <span id="code-display"></span>
+      <span class="copy-btn">📋 코드 복사</span>
     </div>
     <div class="tab-row">
-      <button class="tab-btn active" onclick="switchTab('strength', this)">장점 <span id="tab-s-cnt"></span></button>
-      <button class="tab-btn" onclick="switchTab('weakness', this)">단점 <span id="tab-w-cnt"></span></button>
+      <button class="tab-btn active" onclick="switchTab('s',this)">장점 <span id="tab-sc"></span></button>
+      <button class="tab-btn" onclick="switchTab('w',this)">단점 <span id="tab-wc"></span></button>
     </div>
-    <div id="feedback-strength-list"></div>
-    <div id="feedback-weakness-list" style="display:none;"></div>
-
-    <!-- 삭제 영역 -->
+    <div id="list-s"></div>
+    <div id="list-w" style="display:none;"></div>
     <div class="delete-zone">
-      <h3><i class="ti ti-trash" aria-hidden="true" style="font-size:14px; vertical-align:-1px; margin-right:4px;"></i>페이지 삭제</h3>
+      <h3>🗑️ 페이지 삭제</h3>
       <p>페이지와 수집된 모든 피드백이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없어요.</p>
-      <button class="btn btn-danger-outline" onclick="showDeleteConfirm()"><i class="ti ti-trash" aria-hidden="true"></i> 내 페이지 삭제하기</button>
-    </div>
-
-    <!-- 삭제 확인 모달 (인라인) -->
-    <div id="delete-modal" style="display:none; margin-top: 1rem;">
-      <div class="modal-backdrop">
-        <div class="modal-box">
-          <div style="text-align:center; margin-bottom:1.25rem;">
-            <div style="width:44px; height:44px; border-radius:50%; background:#FCEBEB; display:flex; align-items:center; justify-content:center; margin:0 auto 10px;">
-              <i class="ti ti-trash" style="font-size:20px; color:#A32D2D;" aria-hidden="true"></i>
-            </div>
-            <h3 style="font-size:15px; margin-bottom:4px;">정말 삭제할까요?</h3>
-            <p style="font-size:13px;">페이지와 피드백 <strong id="del-count">0</strong>개가 모두 삭제됩니다.<br>이 작업은 되돌릴 수 없어요.</p>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn" style="flex:1;" onclick="hideDeleteConfirm()">취소</button>
-            <button class="btn btn-danger-solid" style="flex:1;" onclick="deletePage()"><i class="ti ti-trash" aria-hidden="true"></i> 삭제</button>
-          </div>
-        </div>
-      </div>
+      <button class="btn btn-danger" onclick="showDeleteModal()">내 페이지 삭제하기</button>
     </div>
   </div>
 
 </div>
 
 <script>
-const DB_KEY = 'rolling_paper_v2';
-function loadDB() { try { const r = localStorage.getItem(DB_KEY); return r ? JSON.parse(r) : { pages: {} }; } catch(e) { return { pages: {} }; } }
-function saveDB(db) { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch(e) {} }
-function genCode() { return Math.random().toString(36).substr(2, 6).toUpperCase(); }
-function getInitials(name) { return name ? name.slice(0, 2) : '?'; }
-function timeAgo(ts) {
-  const d = Math.floor((Date.now() - ts) / 60000);
-  if (d < 1) return '방금 전'; if (d < 60) return d + '분 전';
-  if (d < 1440) return Math.floor(d/60) + '시간 전'; return Math.floor(d/1440) + '일 전';
-}
+const SUPABASE_URL = 'https://uxyitoadkphicyssbrqg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4eWl0b2Fka3BoaWN5c3NicnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzkwMDUsImV4cCI6MjA5NTUxNTAwNX0.TM32epvXlAF7l9GlUa-LNfL6qFfXK_quI4Q2_EAXaJQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentPage = null;
 let pinBuffer = '';
+let myPageCodes = JSON.parse(localStorage.getItem('my_page_codes') || '[]');
+
+function saveMyCode(code) {
+  if (!myPageCodes.includes(code)) { myPageCodes.push(code); localStorage.setItem('my_page_codes', JSON.stringify(myPageCodes)); }
+}
+function removeMyCode(code) {
+  myPageCodes = myPageCodes.filter(c => c !== code);
+  localStorage.setItem('my_page_codes', JSON.stringify(myPageCodes));
+}
 
 function goTo(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -255,194 +324,229 @@ function showToast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
-function updatePinDots(id, len) {
+function updDots(id, len) {
   document.getElementById(id).querySelectorAll('.pin-dot').forEach((d,i) => d.classList.toggle('filled', i < len));
 }
+function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
+function getInit(name) { return name ? name.slice(0,2) : '?'; }
+function timeAgo(ts) {
+  const d = Math.floor((Date.now() - new Date(ts)) / 60000);
+  if (d < 1) return '방금 전'; if (d < 60) return d+'분 전';
+  if (d < 1440) return Math.floor(d/60)+'시간 전'; return Math.floor(d/1440)+'일 전';
+}
 
-function renderHome() {
-  const db = loadDB();
-  const list = document.getElementById('my-pages-list');
-  const pages = Object.values(db.pages);
-  if (!pages.length) {
-    list.innerHTML = '<div class="empty-state"><i class="ti ti-note" aria-hidden="true"></i><p>아직 만든 페이지가 없어요.<br>내 페이지를 만들어 팀원들에게 공유해보세요!</p></div>';
+async function renderHome() {
+  const el = document.getElementById('home-my-pages');
+  if (!myPageCodes.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>아직 만든 페이지가 없어요.<br>내 페이지를 만들어 팀원들에게 공유해보세요!</p></div>';
     return;
   }
-  list.innerHTML = pages.map(p => {
-    const total = (p.feedbacks||[]).length;
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>불러오는 중...</div>';
+  const { data, error } = await db.from('pages').select('*, feedbacks(count)').in('code', myPageCodes);
+  if (error || !data) { el.innerHTML = '<p style="color:var(--red);font-size:13px;text-align:center;">불러오기 실패. 잠시 후 다시 시도해주세요.</p>'; return; }
+  if (!data.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><p>페이지를 찾을 수 없어요.</p></div>'; return; }
+  el.innerHTML = data.map(p => {
+    const cnt = p.feedbacks?.[0]?.count || 0;
     return `<div class="profile-item" onclick="openMyPage('${p.code}')">
-      <div class="profile-avatar">${getInitials(p.name)}</div>
-      <div style="flex:1; margin-left:10px;">
-        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);">${p.name} <span style="font-size:11px;color:var(--color-text-tertiary);font-weight:400;">${p.role||''}</span></div>
-        <div style="font-size:12px;color:var(--color-text-secondary);">피드백 ${total}개 · 코드 ${p.code}</div>
+      <div class="avatar">${getInit(p.name)}</div>
+      <div style="flex:1;">
+        <div class="profile-name">${p.name} <span style="font-size:11px;color:var(--text3);font-weight:400;">${p.role||''}</span></div>
+        <div class="profile-sub">피드백 ${cnt}개 · 코드 ${p.code}</div>
       </div>
-      <i class="ti ti-chevron-right" style="color:var(--color-text-tertiary);" aria-hidden="true"></i>
+      <span style="color:var(--text3);font-size:18px;">›</span>
     </div>`;
   }).join('');
 }
 
 let createPin = '';
 function setupCreateKeypad() {
-  createPin = '';
-  document.getElementById('create-keypad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
-    k==='' ? '<div></div>' : `<button class="pin-key" onclick="createPinPress('${k}')">${k}</button>`
-  ).join('');
-  updatePinDots('create-pin-dots', 0);
+  createPin = ''; updDots('create-pin-dots', 0);
+  document.getElementById('create-keypad').innerHTML =
+    [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
+      k==='' ? '<div></div>' : `<button class="pin-key" onclick="cpPress('${k}')">${k}</button>`
+    ).join('');
 }
-function createPinPress(k) {
+function cpPress(k) {
   if (k==='⌫') createPin = createPin.slice(0,-1);
   else if (createPin.length < 4) createPin += k;
-  updatePinDots('create-pin-dots', createPin.length);
+  updDots('create-pin-dots', createPin.length);
 }
 setupCreateKeypad();
 
-function createPage() {
+async function createPage() {
   const name = document.getElementById('create-name').value.trim();
   const role = document.getElementById('create-role').value.trim();
   const err = document.getElementById('create-error');
   if (!name) { err.textContent = '이름을 입력해주세요.'; return; }
   if (createPin.length !== 4) { err.textContent = 'PIN 4자리를 모두 입력해주세요.'; return; }
   err.textContent = '';
-  const db = loadDB(); const code = genCode();
-  db.pages[code] = { code, name, role, pin: createPin, feedbacks: [], createdAt: Date.now() };
-  saveDB(db);
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true; btn.textContent = '생성 중...';
+  const code = genCode();
+  const { error } = await db.from('pages').insert({ code, name, role, pin: createPin });
+  btn.disabled = false; btn.textContent = '✓ 페이지 생성하기';
+  if (error) { err.textContent = '생성 실패. 다시 시도해주세요.'; return; }
+  saveMyCode(code);
   document.getElementById('create-name').value = '';
   document.getElementById('create-role').value = '';
   createPin = ''; setupCreateKeypad();
-  showToast('페이지가 생성되었어요!'); goTo('screen-home');
+  showToast('페이지가 생성됐어요! 🎉');
+  goTo('screen-home');
 }
 
-function findPage() {
-  const q = document.getElementById('find-input').value.trim().toUpperCase();
-  const db = loadDB(); const results = document.getElementById('find-results');
-  if (!q) { results.innerHTML = '<p style="font-size:13px;color:var(--color-text-secondary);text-align:center;padding:1rem;">검색어를 입력해주세요.</p>'; return; }
-  const matched = Object.values(db.pages).filter(p => p.code === q || p.name.includes(q));
-  if (!matched.length) { results.innerHTML = '<div class="empty-state"><i class="ti ti-mood-sad" aria-hidden="true"></i><p>검색 결과가 없어요.</p></div>'; return; }
-  results.innerHTML = matched.map(p => `
+async function findPage() {
+  const q = document.getElementById('find-input').value.trim();
+  const results = document.getElementById('find-results');
+  const btn = document.getElementById('find-btn');
+  if (!q) { results.innerHTML = '<p style="font-size:13px;color:var(--text3);text-align:center;padding:1rem;">검색어를 입력해주세요.</p>'; return; }
+  btn.disabled = true; btn.textContent = '검색 중...';
+  results.innerHTML = '<div class="loading"><span class="spinner"></span>검색 중...</div>';
+  const upper = q.toUpperCase();
+  const { data, error } = await db.from('pages').select('*').or(`code.eq.${upper},name.ilike.%${q}%`);
+  btn.disabled = false; btn.textContent = '🔍 검색';
+  if (error) { results.innerHTML = '<p style="color:var(--red);font-size:13px;text-align:center;">검색 실패. 다시 시도해주세요.</p>'; return; }
+  if (!data || !data.length) { results.innerHTML = '<div class="empty-state"><div class="empty-icon">😢</div><p>검색 결과가 없어요.<br>코드 또는 이름을 정확히 입력해보세요.</p></div>'; return; }
+  results.innerHTML = data.map(p => `
     <div class="profile-item" onclick="openWritePage('${p.code}')">
-      <div class="profile-avatar">${getInitials(p.name)}</div>
-      <div style="flex:1;margin-left:10px;">
-        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);">${p.name} <span style="font-size:11px;color:var(--color-text-tertiary);font-weight:400;">${p.role||''}</span></div>
-        <div style="font-size:12px;color:var(--color-text-secondary);">코드 ${p.code} · 피드백 남기기</div>
+      <div class="avatar">${getInit(p.name)}</div>
+      <div style="flex:1;">
+        <div class="profile-name">${p.name} <span style="font-size:11px;color:var(--text3);font-weight:400;">${p.role||''}</span></div>
+        <div class="profile-sub">코드 ${p.code} · 피드백 남기기</div>
       </div>
-      <i class="ti ti-arrow-right" style="color:#534AB7;" aria-hidden="true"></i>
+      <span style="color:var(--purple);font-size:18px;">›</span>
     </div>`).join('');
 }
 
-function openWritePage(code) {
-  const db = loadDB(); const page = db.pages[code]; if (!page) return;
-  currentPage = page;
-  document.getElementById('write-back').onclick = () => goTo('screen-find');
-  document.getElementById('write-profile-header').innerHTML = `
-    <div class="profile-avatar" style="width:40px;height:40px;">${getInitials(page.name)}</div>
-    <div><div style="font-size:15px;font-weight:500;color:var(--color-text-primary);">${page.name}</div>
-    <div style="font-size:12px;color:var(--color-text-secondary);">${page.role||'팀원'}</div></div>`;
-  document.getElementById('write-guide').textContent = `${page.name}님과 함께 일하면서 느낀 점을 솔직하게 적어주세요.`;
+async function openWritePage(code) {
+  const { data } = await db.from('pages').select('*').eq('code', code).single();
+  if (!data) { showToast('페이지를 찾을 수 없어요.'); return; }
+  currentPage = data;
+  document.getElementById('write-header').innerHTML = `
+    <div class="avatar" style="width:40px;height:40px;">${getInit(data.name)}</div>
+    <div><div style="font-size:15px;font-weight:500;color:var(--text);">${data.name}</div>
+    <div style="font-size:12px;color:var(--text2);">${data.role||'팀원'}</div></div>`;
+  document.getElementById('write-guide').textContent = `${data.name}님과 함께 일하면서 느낀 점을 솔직하게 적어주세요.`;
   document.getElementById('write-strength').value = '';
   document.getElementById('write-weakness').value = '';
-  document.getElementById('s-count').textContent = '0';
-  document.getElementById('w-count').textContent = '0';
+  document.getElementById('sc').textContent = '0';
+  document.getElementById('wc').textContent = '0';
   document.getElementById('write-error').textContent = '';
   goTo('screen-write');
 }
 
-document.getElementById('write-strength').addEventListener('input', function() { document.getElementById('s-count').textContent = this.value.length; });
-document.getElementById('write-weakness').addEventListener('input', function() { document.getElementById('w-count').textContent = this.value.length; });
+document.getElementById('write-strength').addEventListener('input', function() { document.getElementById('sc').textContent = this.value.length; });
+document.getElementById('write-weakness').addEventListener('input', function() { document.getElementById('wc').textContent = this.value.length; });
 
-function submitFeedback() {
+async function submitFeedback() {
   const s = document.getElementById('write-strength').value.trim();
   const w = document.getElementById('write-weakness').value.trim();
   const err = document.getElementById('write-error');
   if (!s && !w) { err.textContent = '장점 또는 단점 중 하나 이상 작성해주세요.'; return; }
   err.textContent = '';
-  const db = loadDB(); const page = db.pages[currentPage.code]; if (!page) return;
-  page.feedbacks.push({ strength: s, weakness: w, ts: Date.now() });
-  saveDB(db); goTo('screen-done');
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = '제출 중...';
+  const { error } = await db.from('feedbacks').insert({ page_code: currentPage.code, strength: s || null, weakness: w || null });
+  btn.disabled = false; btn.textContent = '📨 익명으로 피드백 제출하기';
+  if (error) { err.textContent = '제출 실패. 다시 시도해주세요.'; return; }
+  goTo('screen-done');
 }
 
 function openMyPage(code) {
-  const db = loadDB(); currentPage = db.pages[code]; if (!currentPage) return;
+  const { data: page } = db.from('pages').select('*').eq('code', code);
   pinBuffer = '';
-  document.getElementById('pin-desc').textContent = `${currentPage.name}님의 피드백을 확인하려면 PIN을 입력하세요.`;
-  document.getElementById('pin-back').onclick = () => goTo('screen-home');
+  document.getElementById('pin-desc').textContent = `PIN을 입력해 피드백을 확인하세요.`;
   document.getElementById('pin-error').textContent = '';
+  currentPage = { code };
   setupViewKeypad(); goTo('screen-pin');
 }
 
 function setupViewKeypad() {
-  pinBuffer = ''; updatePinDots('view-pin-dots', 0);
-  document.getElementById('view-keypad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
-    k==='' ? '<div></div>' : `<button class="pin-key" onclick="viewPinPress('${k}')">${k}</button>`
-  ).join('');
+  pinBuffer = ''; updDots('view-pin-dots', 0);
+  document.getElementById('view-keypad').innerHTML =
+    [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k =>
+      k==='' ? '<div></div>' : `<button class="pin-key" onclick="vpPress('${k}')">${k}</button>`
+    ).join('');
 }
-function viewPinPress(k) {
+async function vpPress(k) {
   if (k==='⌫') pinBuffer = pinBuffer.slice(0,-1);
   else if (pinBuffer.length < 4) pinBuffer += k;
-  updatePinDots('view-pin-dots', pinBuffer.length);
+  updDots('view-pin-dots', pinBuffer.length);
   if (pinBuffer.length === 4) {
-    setTimeout(() => {
-      if (pinBuffer === currentPage.pin) { renderMyPage(); goTo('screen-mypage'); }
-      else { document.getElementById('pin-error').textContent = 'PIN이 틀렸어요. 다시 입력해주세요.'; pinBuffer = ''; updatePinDots('view-pin-dots', 0); }
-    }, 200);
+    const enteredPin = pinBuffer;
+    pinBuffer = '';
+    const { data, error } = await db.from('pages').select('*').eq('code', currentPage.code).single();
+    if (error || !data) { document.getElementById('pin-error').textContent = '페이지를 찾을 수 없어요.'; updDots('view-pin-dots', 0); return; }
+    if (data.pin !== enteredPin) {
+      document.getElementById('pin-error').textContent = 'PIN이 틀렸어요. 다시 입력해주세요.';
+      updDots('view-pin-dots', 0); return;
+    }
+    currentPage = data;
+    await renderMyPage(); goTo('screen-mypage');
   }
 }
 
-function renderMyPage() {
-  const db = loadDB(); const page = db.pages[currentPage.code];
-  const feedbacks = page.feedbacks || [];
-  const strengths = feedbacks.filter(f => f.strength);
-  const weaknesses = feedbacks.filter(f => f.weakness);
+async function renderMyPage() {
+  const { data: feedbacks } = await db.from('feedbacks').select('*').eq('page_code', currentPage.code).order('created_at', { ascending: false });
+  const all = feedbacks || [];
+  const ss = all.filter(f => f.strength);
+  const ws = all.filter(f => f.weakness);
   document.getElementById('mypage-header').innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;">
-      <div class="profile-avatar" style="width:44px;height:44px;font-size:15px;">${getInitials(page.name)}</div>
+      <div class="avatar" style="width:44px;height:44px;font-size:15px;">${getInit(currentPage.name)}</div>
       <div>
-        <div style="font-size:16px;font-weight:500;color:var(--color-text-primary);">${page.name}</div>
-        <div style="font-size:12px;color:var(--color-text-secondary);">${page.role||''}</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);">${currentPage.name}</div>
+        <div style="font-size:12px;color:var(--text2);">${currentPage.role||''}</div>
       </div>
-      <span class="badge badge-lock" style="margin-left:auto;"><i class="ti ti-eye" style="font-size:12px;" aria-hidden="true"></i>본인만 열람</span>
+      <span class="badge-lock" style="margin-left:auto;">🔒 본인만 열람</span>
     </div>`;
-  document.getElementById('cnt-strength').textContent = strengths.length;
-  document.getElementById('cnt-weakness').textContent = weaknesses.length;
-  document.getElementById('tab-s-cnt').textContent = strengths.length ? `(${strengths.length})` : '';
-  document.getElementById('tab-w-cnt').textContent = weaknesses.length ? `(${weaknesses.length})` : '';
-  document.getElementById('page-code-display').textContent = `공유 코드: ${page.code} · 팀원에게 코드를 알려주세요`;
-  document.getElementById('feedback-strength-list').innerHTML = strengths.length
-    ? strengths.map(f => `<div class="feedback-item"><p>${f.strength}</p><div class="meta">${timeAgo(f.ts)}</div></div>`).join('')
-    : '<div class="empty-state"><i class="ti ti-sun" aria-hidden="true"></i><p>아직 장점 피드백이 없어요.</p></div>';
-  document.getElementById('feedback-weakness-list').innerHTML = weaknesses.length
-    ? weaknesses.map(f => `<div class="feedback-item"><p>${f.weakness}</p><div class="meta">${timeAgo(f.ts)}</div></div>`).join('')
-    : '<div class="empty-state"><i class="ti ti-adjustments" aria-hidden="true"></i><p>아직 단점 피드백이 없어요.</p></div>';
-  document.getElementById('delete-modal').style.display = 'none';
+  document.getElementById('cnt-s').textContent = ss.length;
+  document.getElementById('cnt-w').textContent = ws.length;
+  document.getElementById('tab-sc').textContent = ss.length ? `(${ss.length})` : '';
+  document.getElementById('tab-wc').textContent = ws.length ? `(${ws.length})` : '';
+  document.getElementById('code-display').textContent = `공유 코드: ${currentPage.code}  ·  팀원에게 이 코드를 알려주세요`;
+  document.getElementById('list-s').innerHTML = ss.length
+    ? ss.map(f => `<div class="feedback-item"><p>${f.strength}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">☀️</div><p>아직 장점 피드백이 없어요.</p></div>';
+  document.getElementById('list-w').innerHTML = ws.length
+    ? ws.map(f => `<div class="feedback-item"><p>${f.weakness}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">🔧</div><p>아직 단점 피드백이 없어요.</p></div>';
+  document.getElementById('list-w').style.display = 'none';
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
 }
 
 function switchTab(type, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-  document.getElementById('feedback-strength-list').style.display = type === 'strength' ? 'block' : 'none';
-  document.getElementById('feedback-weakness-list').style.display = type === 'weakness' ? 'block' : 'none';
+  document.getElementById('list-s').style.display = type==='s' ? 'block' : 'none';
+  document.getElementById('list-w').style.display = type==='w' ? 'block' : 'none';
 }
 
-function copyPageLink() {
+function copyCode() {
   if (!currentPage) return;
-  const text = `나의 장단점 롤링페이퍼 참여 요청\n페이지 코드: ${currentPage.code}\n친구 페이지 찾기에서 코드를 입력해주세요!`;
-  navigator.clipboard.writeText(text).then(() => showToast('복사됐어요!')).catch(() => showToast(`코드: ${currentPage.code}`));
+  const text = `[나의 장단점 롤링페이퍼] ${currentPage.name}님의 피드백 페이지\n코드: ${currentPage.code}\n"친구 페이지 찾기"에서 위 코드를 입력해주세요!`;
+  navigator.clipboard.writeText(text).then(() => showToast('코드가 복사됐어요! 팀원에게 공유하세요 📋')).catch(() => showToast(`코드: ${currentPage.code}`));
 }
 
-function showDeleteConfirm() {
-  const db = loadDB(); const page = db.pages[currentPage.code];
-  const total = (page.feedbacks||[]).length;
+function showDeleteModal() {
+  const total = (parseInt(document.getElementById('cnt-s').textContent)||0) + (parseInt(document.getElementById('cnt-w').textContent)||0);
   document.getElementById('del-count').textContent = total;
-  document.getElementById('delete-modal').style.display = 'block';
+  document.getElementById('delete-modal').classList.add('open');
 }
-function hideDeleteConfirm() {
-  document.getElementById('delete-modal').style.display = 'none';
-}
-function deletePage() {
-  const db = loadDB();
-  delete db.pages[currentPage.code];
-  saveDB(db);
-  currentPage = null;
+function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); }
+
+async function deletePage() {
+  const btn = document.getElementById('del-confirm-btn');
+  btn.disabled = true; btn.textContent = '삭제 중...';
+  const { error } = await db.from('pages').delete().eq('code', currentPage.code);
+  btn.disabled = false; btn.textContent = '삭제하기';
+  if (error) { showToast('삭제 실패. 다시 시도해주세요.'); closeDeleteModal(); return; }
+  removeMyCode(currentPage.code);
+  closeDeleteModal();
   showToast('페이지가 삭제됐어요.');
+  currentPage = null;
   goTo('screen-home');
 }
 
 renderHome();
 </script>
+</body>
+</html>
