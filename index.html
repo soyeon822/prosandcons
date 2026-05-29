@@ -163,6 +163,19 @@
   .danger-bar { background: var(--red-light); border: 1px solid var(--red-mid); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .admin-link { position: fixed; bottom: 16px; right: 16px; font-size: 11px; color: var(--text3); cursor: pointer; background: none; border: none; font-family: inherit; }
   .admin-link:hover { color: var(--text2); }
+  .new-feedback-popup {
+    position: fixed; bottom: 52px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1A1916; color: #F7F6F2; border-radius: 16px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22); z-index: 998;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s;
+    white-space: nowrap; max-width: calc(100vw - 2rem);
+  }
+  .new-feedback-popup.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+  .new-feedback-popup .popup-icon { font-size: 20px; flex-shrink: 0; }
+  .new-feedback-popup .popup-text { font-size: 13px; font-weight: 500; flex: 1; }
+  .new-feedback-popup .popup-close { font-size: 16px; cursor: pointer; opacity: 0.6; flex-shrink: 0; padding: 2px 4px; }
+  .new-feedback-popup .popup-close:hover { opacity: 1; }
   .toggle-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .toggle-card.locked { border-color: var(--red-mid); background: var(--red-light); }
   .toggle-card.open { border-color: var(--teal-mid); background: var(--teal-light); }
@@ -181,6 +194,13 @@
 <body>
 <div class="app">
   <div class="toast" id="toast"></div>
+
+  <!-- 새 피드백 알림 팝업 -->
+  <div class="new-feedback-popup" id="new-feedback-popup">
+    <span class="popup-icon">🎉</span>
+    <span class="popup-text" id="popup-text">새로운 피드백이 있어요!</span>
+    <span class="popup-close" onclick="closeNewFeedbackPopup()">✕</span>
+  </div>
 
   <!-- 삭제 확인 모달 -->
   <div class="modal-wrap" id="delete-modal">
@@ -619,6 +639,20 @@ async function renderMyPage() {
     : '<div class="empty-state"><div class="empty-icon">🔧</div><p>아직 단점 피드백이 없어요.</p></div>';
   document.getElementById('list-w').style.display = 'none';
   document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+
+  // 새 피드백 팝업
+  const lastSeenKey = 'last_seen_' + currentPage.code;
+  const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || '0');
+  const newCount = all.filter(f => new Date(f.created_at).getTime() > lastSeen).length;
+  if (newCount > 0) {
+    document.getElementById('popup-text').textContent = newCount + '개의 새로운 피드백이 있어요! 👀';
+    setTimeout(() => document.getElementById('new-feedback-popup').classList.add('show'), 300);
+  }
+  localStorage.setItem(lastSeenKey, Date.now().toString());
+}
+
+function closeNewFeedbackPopup() {
+  document.getElementById('new-feedback-popup').classList.remove('show');
 }
 
 function switchTab(type, btn) {
@@ -655,7 +689,7 @@ async function deletePage() {
 
 
 // ===== 관리자 =====
-const ADMIN_PW = 'admin0822'; 
+const ADMIN_PW = 'admin1234'; // ← 원하는 비밀번호로 바꾸세요
 let adminLoggedIn = false;
 let adminCurrentPage = null;
 
