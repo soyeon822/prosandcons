@@ -689,7 +689,7 @@ async function deletePage() {
 
 
 // ===== 관리자 =====
-const ADMIN_PW = 'admin1234'; // ← 원하는 비밀번호로 바꾸세요
+const ADMIN_PW = 'admin0822'; // ← 원하는 비밀번호로 바꾸세요
 let adminLoggedIn = false;
 let adminCurrentPage = null;
 
@@ -757,10 +757,16 @@ async function adminOpenDetail(code) {
   document.getElementById('admin-tab-sc').textContent = ss.length ? `(${ss.length})` : '';
   document.getElementById('admin-tab-wc').textContent = ws.length ? `(${ws.length})` : '';
   document.getElementById('admin-list-s').innerHTML = ss.length
-    ? ss.map(f => `<div class="feedback-item"><p>${f.strength}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>`).join('')
+    ? ss.map(f => `<div class="feedback-item" id="fb-${f.id}" style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;"><p>${f.strength}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>
+        <button onclick="adminDeleteFeedback('${f.id}')" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px 4px;line-height:1;" title="삭제">🗑️</button>
+      </div>`).join('')
     : '<div class="empty-state"><div class="empty-icon">☀️</div><p>장점 피드백 없음</p></div>';
   document.getElementById('admin-list-w').innerHTML = ws.length
-    ? ws.map(f => `<div class="feedback-item"><p>${f.weakness}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>`).join('')
+    ? ws.map(f => `<div class="feedback-item" id="fb-${f.id}" style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;"><p>${f.weakness}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>
+        <button onclick="adminDeleteFeedback('${f.id}')" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px 4px;line-height:1;" title="삭제">🗑️</button>
+      </div>`).join('')
     : '<div class="empty-state"><div class="empty-icon">🔧</div><p>단점 피드백 없음</p></div>';
   document.getElementById('admin-list-w').style.display = 'none';
   document.querySelectorAll('#screen-admin-detail .tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
@@ -772,6 +778,22 @@ function adminSwitchTab(type, btn) {
   document.querySelectorAll('#screen-admin-detail .tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
   document.getElementById('admin-list-s').style.display = type==='s' ? 'block' : 'none';
   document.getElementById('admin-list-w').style.display = type==='w' ? 'block' : 'none';
+}
+
+async function adminDeleteFeedback(id) {
+  if (!confirm('이 피드백을 삭제할까요?')) return;
+  const { error } = await db.from('feedbacks').delete().eq('id', id);
+  if (error) { showToast('삭제 실패. 다시 시도해주세요.'); return; }
+  const el = document.getElementById('fb-' + id);
+  if (el) { el.style.opacity = '0'; el.style.transition = 'opacity 0.2s'; setTimeout(() => el.remove(), 200); }
+  // 카운트 업데이트
+  const sLen = document.getElementById('admin-list-s').querySelectorAll('.feedback-item').length;
+  const wLen = document.getElementById('admin-list-w').querySelectorAll('.feedback-item').length;
+  document.getElementById('admin-cnt-s').textContent = sLen;
+  document.getElementById('admin-cnt-w').textContent = wLen;
+  document.getElementById('admin-tab-sc').textContent = sLen ? `(${sLen})` : '';
+  document.getElementById('admin-tab-wc').textContent = wLen ? `(${wLen})` : '';
+  showToast('피드백을 삭제했어요.');
 }
 
 async function adminDeletePage() {
