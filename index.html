@@ -163,6 +163,19 @@
   .danger-bar { background: var(--red-light); border: 1px solid var(--red-mid); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .admin-link { position: fixed; bottom: 16px; right: 16px; font-size: 11px; color: var(--text3); cursor: pointer; background: none; border: none; font-family: inherit; }
   .admin-link:hover { color: var(--text2); }
+  .toggle-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .toggle-card.locked { border-color: var(--red-mid); background: var(--red-light); }
+  .toggle-card.open { border-color: var(--teal-mid); background: var(--teal-light); }
+  .toggle-info .toggle-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .toggle-card.locked .toggle-title { color: #791F1F; }
+  .toggle-card.open .toggle-title { color: var(--teal); }
+  .toggle-info .toggle-desc { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border2); border-radius: 24px; cursor: pointer; transition: background 0.2s; }
+  .toggle-slider:before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .toggle-switch input:checked + .toggle-slider { background: var(--teal); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
 </style>
 </head>
 <body>
@@ -322,6 +335,16 @@
       <div class="admin-stat"><div class="num" id="admin-total-pages">-</div><div class="lbl">전체 페이지</div></div>
       <div class="admin-stat"><div class="num" id="admin-total-feedbacks">-</div><div class="lbl">전체 피드백</div></div>
     </div>
+    <div id="toggle-card-wrap" class="toggle-card locked">
+      <div class="toggle-info">
+        <div class="toggle-title" id="toggle-title-text">🔒 신규 생성 · 작성 잠금 중</div>
+        <div class="toggle-desc" id="toggle-desc-text">현재 새 페이지 생성과 피드백 작성이 막혀 있어요.<br>토글을 켜면 다시 열립니다.</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="mode-toggle" onchange="toggleMode(this.checked)" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <h2 style="font-size:15px;margin:0;">전체 페이지 목록</h2>
       <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="loadAdminPages()">🔄 새로고침</button>
@@ -456,6 +479,7 @@ function cpPress(k) {
 setupCreateKeypad();
 
 async function createPage() {
+  if (!checkAppOpen('create')) return;
   const name = document.getElementById('create-name').value.trim();
   const role = document.getElementById('create-role').value.trim();
   const err = document.getElementById('create-error');
@@ -520,6 +544,7 @@ document.getElementById('write-strength').addEventListener('input', function() {
 document.getElementById('write-weakness').addEventListener('input', function() { document.getElementById('wc').textContent = this.value.length; });
 
 async function submitFeedback() {
+  if (!checkAppOpen('write')) return;
   const s = document.getElementById('write-strength').value.trim();
   const w = document.getElementById('write-weakness').value.trim();
   const err = document.getElementById('write-error');
@@ -641,6 +666,7 @@ function adminLogin() {
     adminLoggedIn = true;
     document.getElementById('admin-pw-input').value = '';
     err.textContent = '';
+    loadToggleState();
     loadAdminPages();
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-admin').classList.add('active');
@@ -727,6 +753,51 @@ async function adminDeletePage() {
   document.getElementById('screen-admin').classList.add('active');
 }
 
+// ===== 모드 토글 (열림/잠금) =====
+// Supabase에 settings 테이블 없이 localStorage로 상태 관리
+// 실제 차단은 앱 레벨(createPage, submitFeedback)에서 처리
+let appOpen = true; // true = 열림(생성·작성 가능), false = 잠금(읽기만)
+
+function loadToggleState() {
+  const saved = localStorage.getItem('app_mode');
+  appOpen = saved === null ? true : saved === 'open';
+  syncToggleUI();
+}
+
+function syncToggleUI() {
+  const toggle = document.getElementById('mode-toggle');
+  const card = document.getElementById('toggle-card-wrap');
+  const title = document.getElementById('toggle-title-text');
+  const desc = document.getElementById('toggle-desc-text');
+  if (!toggle) return;
+  toggle.checked = appOpen;
+  card.className = 'toggle-card ' + (appOpen ? 'open' : 'locked');
+  if (appOpen) {
+    title.textContent = '🟢 서비스 열림 — 생성 · 작성 가능';
+    desc.textContent = '현재 누구나 페이지를 만들고 피드백을 작성할 수 있어요.\n토글을 끄면 읽기 전용으로 전환돼요.';
+  } else {
+    title.textContent = '🔒 서비스 잠금 — 읽기 전용';
+    desc.textContent = '새 페이지 생성과 피드백 작성이 막혀 있어요.\n기존 데이터는 PIN으로 확인할 수 있어요.';
+  }
+}
+
+function toggleMode(checked) {
+  appOpen = checked;
+  localStorage.setItem('app_mode', appOpen ? 'open' : 'closed');
+  syncToggleUI();
+  showToast(appOpen ? '🟢 서비스가 열렸어요. 생성·작성 가능' : '🔒 잠금 모드로 전환됐어요. 읽기 전용');
+}
+
+// 페이지 생성 차단 체크
+function checkAppOpen(actionName) {
+  if (!appOpen) {
+    showToast('🔒 현재 관리자가 서비스를 잠금 상태로 설정했어요.');
+    return false;
+  }
+  return true;
+}
+
+loadToggleState();
 renderHome();
 </script>
 </body>
