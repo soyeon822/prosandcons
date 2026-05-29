@@ -144,6 +144,25 @@
   @media (max-width: 480px) {
     .section-grid { grid-template-columns: 1fr; }
   }
+  /* 관리자 스타일 */
+  .admin-login-wrap { max-width: 340px; margin: 4rem auto 0; }
+  .admin-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 8px;
+  }
+  .admin-row:hover { background: var(--bg); }
+  .admin-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .admin-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .admin-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--teal-light); color: var(--teal); font-weight: 500; white-space: nowrap; }
+  .admin-stat-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .admin-stat { flex: 1; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; }
+  .admin-stat .num { font-size: 22px; font-weight: 600; color: var(--purple); }
+  .admin-stat .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .admin-detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .danger-bar { background: var(--red-light); border: 1px solid var(--red-mid); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .admin-link { position: fixed; bottom: 16px; right: 16px; font-size: 11px; color: var(--text3); cursor: pointer; background: none; border: none; font-family: inherit; }
+  .admin-link:hover { color: var(--text2); }
 </style>
 </head>
 <body>
@@ -268,6 +287,69 @@
     </div>
     <div class="pin-keypad" id="view-keypad"></div>
     <div class="error-msg" id="pin-error" style="text-align:center;margin-top:10px;"></div>
+  </div>
+
+  <!-- 관리자 진입 버튼 (우측 하단 고정) -->
+  <button class="admin-link" onclick="goTo('screen-admin-login')">관리자</button>
+
+  <!-- SCREEN: 관리자 로그인 -->
+  <div class="screen" id="screen-admin-login">
+    <div class="admin-login-wrap">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-size:36px;margin-bottom:10px;">🛠️</div>
+        <h2 style="margin-bottom:4px;">관리자 페이지</h2>
+        <p style="font-size:13px;">관리자 비밀번호를 입력하세요.</p>
+      </div>
+      <div class="card">
+        <input type="password" id="admin-pw-input" placeholder="비밀번호 입력" style="margin-bottom:10px;" onkeydown="if(event.key==='Enter')adminLogin()" />
+        <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">🔓 로그인</button>
+        <div class="error-msg" id="admin-pw-error" style="text-align:center;"></div>
+      </div>
+      <button class="nav-back" style="margin:0 auto;display:flex;" onclick="goTo('screen-home')">← 홈으로 돌아가기</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: 관리자 대시보드 -->
+  <div class="screen" id="screen-admin">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+      <div>
+        <h1 style="margin-bottom:2px;">관리자 대시보드</h1>
+        <p style="font-size:12px;">전체 데이터를 관리할 수 있어요.</p>
+      </div>
+      <button class="btn btn-danger" style="font-size:12px;padding:6px 12px;" onclick="adminLogout()">로그아웃</button>
+    </div>
+    <div class="admin-stat-row">
+      <div class="admin-stat"><div class="num" id="admin-total-pages">-</div><div class="lbl">전체 페이지</div></div>
+      <div class="admin-stat"><div class="num" id="admin-total-feedbacks">-</div><div class="lbl">전체 피드백</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <h2 style="font-size:15px;margin:0;">전체 페이지 목록</h2>
+      <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="loadAdminPages()">🔄 새로고침</button>
+    </div>
+    <div id="admin-pages-list"></div>
+  </div>
+
+  <!-- SCREEN: 관리자 페이지 상세 -->
+  <div class="screen" id="screen-admin-detail">
+    <button class="nav-back" onclick="goTo('screen-admin')">← 목록으로</button>
+    <div id="admin-detail-header" class="admin-detail-header"></div>
+    <div class="count-row">
+      <div class="count-card s"><div class="count-num" id="admin-cnt-s">0</div><div class="count-lbl">장점 피드백</div></div>
+      <div class="count-card w"><div class="count-num" id="admin-cnt-w">0</div><div class="count-lbl">단점 피드백</div></div>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="adminSwitchTab('s',this)">장점 <span id="admin-tab-sc"></span></button>
+      <button class="tab-btn" onclick="adminSwitchTab('w',this)">단점 <span id="admin-tab-wc"></span></button>
+    </div>
+    <div id="admin-list-s"></div>
+    <div id="admin-list-w" style="display:none;"></div>
+    <div style="border:1px solid var(--red-mid);border-radius:var(--radius);padding:12px 14px;margin-top:1.5rem;background:var(--red-light);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#791F1F;">🗑️ 이 페이지 삭제</div>
+        <div style="font-size:12px;color:var(--red);margin-top:2px;">페이지와 피드백 전체가 영구 삭제돼요.</div>
+      </div>
+      <button class="btn btn-danger-solid" style="font-size:13px;padding:7px 14px;white-space:nowrap;" onclick="adminDeletePage()">삭제</button>
+    </div>
   </div>
 
   <!-- SCREEN: 내 피드백 보기 -->
@@ -544,6 +626,105 @@ async function deletePage() {
   showToast('페이지가 삭제됐어요.');
   currentPage = null;
   goTo('screen-home');
+}
+
+
+// ===== 관리자 =====
+const ADMIN_PW = 'admin0822'; 
+let adminLoggedIn = false;
+let adminCurrentPage = null;
+
+function adminLogin() {
+  const pw = document.getElementById('admin-pw-input').value;
+  const err = document.getElementById('admin-pw-error');
+  if (pw === ADMIN_PW) {
+    adminLoggedIn = true;
+    document.getElementById('admin-pw-input').value = '';
+    err.textContent = '';
+    loadAdminPages();
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-admin').classList.add('active');
+  } else {
+    err.textContent = '비밀번호가 틀렸어요.';
+  }
+}
+
+function adminLogout() {
+  adminLoggedIn = false;
+  goTo('screen-home');
+}
+
+async function loadAdminPages() {
+  if (!adminLoggedIn) return;
+  const list = document.getElementById('admin-pages-list');
+  list.innerHTML = '<div class="loading"><span class="spinner"></span>불러오는 중...</div>';
+  const { data: pages, error } = await db.from('pages').select('*, feedbacks(count)').order('created_at', { ascending: false });
+  if (error || !pages) { list.innerHTML = '<p style="color:var(--red);font-size:13px;text-align:center;">불러오기 실패.</p>'; return; }
+  const { count: totalFb } = await db.from('feedbacks').select('*', { count: 'exact', head: true });
+  document.getElementById('admin-total-pages').textContent = pages.length;
+  document.getElementById('admin-total-feedbacks').textContent = totalFb || 0;
+  if (!pages.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>아직 생성된 페이지가 없어요.</p></div>'; return; }
+  list.innerHTML = pages.map(p => {
+    const cnt = p.feedbacks?.[0]?.count || 0;
+    return `<div class="admin-row" onclick="adminOpenDetail('${p.code}')">
+      <div class="avatar" style="width:34px;height:34px;font-size:12px;flex-shrink:0;">${getInit(p.name)}</div>
+      <div style="flex:1;margin-left:10px;">
+        <div class="admin-name">${p.name} <span style="font-size:11px;color:var(--text3);font-weight:400;">${p.role||''}</span></div>
+        <div class="admin-meta">코드 ${p.code} · ${timeAgo(p.created_at)}</div>
+      </div>
+      <span class="admin-badge">피드백 ${cnt}개</span>
+      <span style="color:var(--text3);font-size:16px;margin-left:8px;">›</span>
+    </div>`;
+  }).join('');
+}
+
+async function adminOpenDetail(code) {
+  const { data: page } = await db.from('pages').select('*').eq('code', code).single();
+  if (!page) return;
+  adminCurrentPage = page;
+  const { data: feedbacks } = await db.from('feedbacks').select('*').eq('page_code', code).order('created_at', { ascending: false });
+  const all = feedbacks || [];
+  const ss = all.filter(f => f.strength);
+  const ws = all.filter(f => f.weakness);
+  document.getElementById('admin-detail-header').innerHTML = `
+    <div class="avatar" style="width:44px;height:44px;font-size:15px;">${getInit(page.name)}</div>
+    <div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);">${page.name}</div>
+      <div style="font-size:12px;color:var(--text2);">${page.role||''} · 코드 ${page.code} · ${timeAgo(page.created_at)}</div>
+    </div>`;
+  document.getElementById('admin-cnt-s').textContent = ss.length;
+  document.getElementById('admin-cnt-w').textContent = ws.length;
+  document.getElementById('admin-tab-sc').textContent = ss.length ? `(${ss.length})` : '';
+  document.getElementById('admin-tab-wc').textContent = ws.length ? `(${ws.length})` : '';
+  document.getElementById('admin-list-s').innerHTML = ss.length
+    ? ss.map(f => `<div class="feedback-item"><p>${f.strength}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">☀️</div><p>장점 피드백 없음</p></div>';
+  document.getElementById('admin-list-w').innerHTML = ws.length
+    ? ws.map(f => `<div class="feedback-item"><p>${f.weakness}</p><div class="feedback-meta">${timeAgo(f.created_at)}</div></div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">🔧</div><p>단점 피드백 없음</p></div>';
+  document.getElementById('admin-list-w').style.display = 'none';
+  document.querySelectorAll('#screen-admin-detail .tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-admin-detail').classList.add('active');
+}
+
+function adminSwitchTab(type, btn) {
+  document.querySelectorAll('#screen-admin-detail .tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  document.getElementById('admin-list-s').style.display = type==='s' ? 'block' : 'none';
+  document.getElementById('admin-list-w').style.display = type==='w' ? 'block' : 'none';
+}
+
+async function adminDeletePage() {
+  if (!adminCurrentPage) return;
+  if (!confirm(`"${adminCurrentPage.name}"님의 페이지와 모든 피드백을 삭제할까요?`)) return;
+  const { error } = await db.from('pages').delete().eq('code', adminCurrentPage.code);
+  if (error) { showToast('삭제 실패. 다시 시도해주세요.'); return; }
+  removeMyCode(adminCurrentPage.code);
+  showToast(`"${adminCurrentPage.name}" 페이지를 삭제했어요.`);
+  adminCurrentPage = null;
+  loadAdminPages();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-admin').classList.add('active');
 }
 
 renderHome();
